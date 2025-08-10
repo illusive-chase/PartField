@@ -73,7 +73,7 @@ class Demo_Dataset(torch.utils.data.Dataset):
         for f in all_files:
             if ".ply" in f and self.is_pc:
                 selected.append(f)
-            elif (".obj" in f or ".glb" in f or ".off" in f) and not self.is_pc:
+            elif (".obj" in f or ".glb" in f or ".off" in f or ".ply" in f) and not self.is_pc:
                 selected.append(f)
 
         self.data_list = selected
@@ -209,7 +209,7 @@ class Demo_Remesh_Dataset(torch.utils.data.Dataset):
 
         selected = []
         for f in all_files:
-            if (".obj" in f or ".glb" in f):
+            if (".obj" in f or ".glb" in f or ".ply" in f):
                 selected.append(f)
 
         self.data_list = selected

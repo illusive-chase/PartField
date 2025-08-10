@@ -793,7 +793,7 @@ if __name__ == '__main__':
     for f in all_files:
         if ".ply" in f and IS_PC and f.split(".")[0] not in existing_model_ids:
             selected.append(f)
-        elif (".obj" in f or ".glb" in f) and not IS_PC and f.split(".")[0] not in existing_model_ids:
+        elif (".obj" in f or ".glb" in f or ".ply" in f) and not IS_PC and f.split(".")[0] not in existing_model_ids:
             selected.append(f)
     
     print("Number of models to process: " + str(len(selected)))
