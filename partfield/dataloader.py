@@ -1,30 +1,24 @@
-import torch
-import boto3
-import json
-from os import path as osp
+import gc
+import math
+import os
+import tempfile
+
 # from botocore.config import Config
 # from botocore.exceptions import ClientError
-import h5py
-import io
-import numpy as np
-import skimage
-import trimesh
-import os
-from scipy.spatial import KDTree
-import gc
-from plyfile import PlyData
-
 ## For remeshing
 import mesh2sdf
-import tetgen
-import vtk
-import math
-import tempfile
+import numpy as np
 
 ### For mesh processing
 import pymeshlab
-
+import skimage
+import tetgen
+import torch
+import trimesh
+import vtk
 from partfield.utils import *
+from plyfile import PlyData
+
 
 #########################
 ## To handle quad inputs
@@ -71,9 +65,9 @@ class Demo_Dataset(torch.utils.data.Dataset):
 
         selected = []
         for f in all_files:
-            if ".ply" in f and self.is_pc:
+            if f.endswith(".ply") and self.is_pc:
                 selected.append(f)
-            elif (".obj" in f or ".glb" in f or ".off" in f or ".ply" in f) and not self.is_pc:
+            elif (f.endswith(".obj") or f.endswith(".glb") or f.endswith(".off") or f.endswith(".ply")) and not self.is_pc:
                 selected.append(f)
 
         self.data_list = selected
@@ -84,7 +78,7 @@ class Demo_Dataset(torch.utils.data.Dataset):
 
         print("val dataset len:", len(self.data_list))
 
-    
+
     def __len__(self):
         return len(self.data_list)
 
@@ -102,7 +96,7 @@ class Demo_Dataset(torch.utils.data.Dataset):
 
         # Extract vertex data
         vertex_data = ply_data["vertex"]
-        
+
         # Convert to NumPy array (x, y, z)
         points = np.vstack([vertex_data["x"], vertex_data["y"], vertex_data["z"]]).T
 
@@ -163,7 +157,7 @@ class Demo_Dataset(torch.utils.data.Dataset):
                 # Save or extract mesh
                 processed = ms.current_mesh()
                 mesh.vertices = processed.vertex_matrix()
-                mesh.faces = processed.face_matrix()               
+                mesh.faces = processed.face_matrix()
 
                 print("after preprocessing...")
                 print(mesh.vertices.shape)
@@ -172,11 +166,11 @@ class Demo_Dataset(torch.utils.data.Dataset):
             ### Save input
             save_dir = f"exp_results/{self.result_name}"
             os.makedirs(save_dir, exist_ok=True)
-            view_id = 0            
-            mesh.export(f'{save_dir}/input_{uid}_{view_id}.ply')                
+            view_id = 0
+            mesh.export(f'{save_dir}/input_{uid}_{view_id}.ply')
 
 
-            pc, _ = trimesh.sample.sample_surface(mesh, self.pc_num_pts) 
+            pc, _ = trimesh.sample.sample_surface(mesh, self.pc_num_pts)
 
         result = {
                     'uid': uid
@@ -191,7 +185,7 @@ class Demo_Dataset(torch.utils.data.Dataset):
         return result
 
     def __getitem__(self, index):
-        
+
         gc.collect()
 
         return self.get_model(self.data_list[index])
@@ -209,7 +203,7 @@ class Demo_Remesh_Dataset(torch.utils.data.Dataset):
 
         selected = []
         for f in all_files:
-            if (".obj" in f or ".glb" in f or ".ply" in f):
+            if (f.endswith(".obj") or f.endswith(".glb") or f.endswith(".ply")):
                 selected.append(f)
 
         self.data_list = selected
@@ -220,7 +214,7 @@ class Demo_Remesh_Dataset(torch.utils.data.Dataset):
 
         print("val dataset len:", len(self.data_list))
 
-    
+
     def __len__(self):
         return len(self.data_list)
 
@@ -262,7 +256,7 @@ class Demo_Remesh_Dataset(torch.utils.data.Dataset):
             # Save or extract mesh
             processed = ms.current_mesh()
             mesh.vertices = processed.vertex_matrix()
-            mesh.faces = processed.face_matrix()               
+            mesh.faces = processed.face_matrix()
 
             print("after preprocessing...")
             print(mesh.vertices.shape)
@@ -271,8 +265,8 @@ class Demo_Remesh_Dataset(torch.utils.data.Dataset):
         ### Save input
         save_dir = f"exp_results/{self.result_name}"
         os.makedirs(save_dir, exist_ok=True)
-        view_id = 0            
-        mesh.export(f'{save_dir}/input_{uid}_{view_id}.ply')   
+        view_id = 0
+        mesh.export(f'{save_dir}/input_{uid}_{view_id}.ply')
 
         try:
             ###### Remesh ######
@@ -327,9 +321,9 @@ class Demo_Remesh_Dataset(torch.utils.data.Dataset):
 
         except:
             print("Error in tet.")
-            mesh = mesh 
+            mesh = mesh
 
-        pc, _ = trimesh.sample.sample_surface(mesh, self.pc_num_pts) 
+        pc, _ = trimesh.sample.sample_surface(mesh, self.pc_num_pts)
 
         result = {
                     'uid': uid
@@ -342,7 +336,7 @@ class Demo_Remesh_Dataset(torch.utils.data.Dataset):
         return result
 
     def __getitem__(self, index):
-        
+
         gc.collect()
 
         return self.get_model(self.data_list[index])
@@ -363,4 +357,3 @@ class Correspondence_Demo_Dataset(Demo_Dataset):
         self.result_name = cfg.result_name
 
         print("val dataset len:", len(self.data_list))
-    
