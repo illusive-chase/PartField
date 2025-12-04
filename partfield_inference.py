@@ -1,13 +1,12 @@
-from partfield.config import default_argument_parser, setup
-from lightning.pytorch import seed_everything, Trainer
-from lightning.pytorch.strategies import DDPStrategy
-from lightning.pytorch.callbacks import ModelCheckpoint
-import lightning
-import torch
-import glob
-import os, sys
-import numpy as np
 import random
+
+import numpy as np
+import torch
+from lightning.pytorch import Trainer, seed_everything
+from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.strategies import DDPStrategy
+from partfield.config import default_argument_parser, setup
+
 
 def predict(cfg):
     seed_everything(cfg.seed)
@@ -15,7 +14,7 @@ def predict(cfg):
     torch.manual_seed(0)
     random.seed(0)
     np.random.seed(0)
-    
+
     checkpoint_callbacks = [ModelCheckpoint(
         monitor="train/current_epoch",
         dirpath=cfg.output_dir,
@@ -39,18 +38,18 @@ def predict(cfg):
                      )
 
     from partfield.model_trainer_pvcnn_only_demo import Model
-    model = Model(cfg)        
+    model = Model(cfg)
 
     if cfg.remesh_demo:
         cfg.n_point_per_face = 10
 
-    trainer.predict(model, ckpt_path=cfg.continue_ckpt)
-        
+    trainer.predict(model, ckpt_path=cfg.continue_ckpt, weights_only=False)
+
 def main():
     parser = default_argument_parser()
     args = parser.parse_args()
     cfg = setup(args, freeze=False)
     predict(cfg)
-    
+
 if __name__ == '__main__':
     main()
